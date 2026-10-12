@@ -1,0 +1,223 @@
+ <!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>পণ্যবাড়ি | PonnoBari</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,"Noto Sans Bengali",sans-serif;background:#f4f8f5;color:#19372a}
+header{background:linear-gradient(120deg,#064e3b,#0e9f6e);color:white;padding:22px;text-align:center}
+header h1{margin:0 0 8px}
+nav{text-align:center;background:white;padding:14px}
+nav a{color:#08764f;text-decoration:none;font-weight:bold;margin:0 12px}
+.hero{text-align:center;padding:35px 15px;background:#d5ffea}
+input,button{font:inherit;padding:10px;border:1px solid #c4d8cb;border-radius:7px;margin:4px}
+input{max-width:100%}
+button{background:#087f5b;color:white;border:0;cursor:pointer}
+button:hover{background:#064e3b}
+section{padding:25px 5%}
+#search{width:min(100%,450px);padding:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.card{background:white;padding:15px;border-radius:12px;box-shadow:0 3px 14px #0001;text-align:center;overflow-wrap:anywhere}
+.card img{width:100%;height:170px;object-fit:contain;background:#f1f7f3;border-radius:8px}
+.card .emoji{font-size:60px;padding:30px}
+.price{font-weight:bold;color:#087f5b}
+.buy{display:inline-block;background:#087f5b;color:white;padding:9px 14px;border-radius:7px;text-decoration:none;margin:5px}
+#admin{background:white;border-radius:12px;padding:18px}
+#admin input{width:min(100%,320px)}
+footer{background:#102b22;color:white;text-align:center;padding:22px}
+.small{font-size:13px;color:#65756b}
+@media(max-width:500px){nav a{display:inline-block;margin:6px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛍️ পণ্যবাড়ি</h1>
+  <p>আপনার পছন্দ, আপনার পণ্য</p>
+</header>
+<nav>
+  <a href="#home">হোম</a>
+  <a href="#products">পণ্য</a>
+  <a href="#admin">পণ্য যোগ করুন</a>
+</nav>
+<div class="hero" id="home">
+  <h2>পছন্দের পণ্য খুঁজুন সহজেই</h2>
+  <p>পণ্য দেখুন এবং বিক্রেতার সাইট থেকে কিনুন।</p>
+  <input id="search" type="search" placeholder="পণ্যের নাম লিখে খুঁজুন...">
+</div>
+
+<section id="products">
+  <h2>পণ্যের তালিকা</h2>
+  <div class="grid" id="productGrid"></div>
+  <p id="emptyMessage" hidden>কোনো পণ্য পাওয়া যায়নি।</p>
+</section>
+
+<section>
+  <div id="admin">
+    <h2>⚙️ পণ্য ব্যবস্থাপনা</h2>
+    <p class="small">এই পণ্যগুলো এই ব্রাউজারে সংরক্ষিত হবে। ছবি দিতে সরাসরি ছবির URL ব্যবহার করুন।</p>
+    <form id="productForm">
+      <input id="name" placeholder="পণ্যের নাম" required>
+      <input id="price" placeholder="দাম (যেমন 850)" type="number" min="0" required>
+      <input id="image" placeholder="ছবির URL (ঐচ্ছিক)" type="url">
+      <input id="link" placeholder="অ্যাফিলিয়েট লিংক" type="url" required>
+      <input id="category" placeholder="ক্যাটাগরি (যেমন বই, ইলেকট্রনিক্স)">
+      <button type="submit" id="saveButton">পণ্য যোগ করুন</button>
+      <button type="button" id="cancelButton" hidden>সম্পাদনা বাতিল</button>
+    </form>
+    <p class="small">শুধু নিজের ল্যাপটপে ব্যবহার করুন। এটি পাসওয়ার্ড-সুরক্ষিত অ্যাডমিন প্যানেল নয়।</p>
+    <button type="button" id="exportButton">পণ্যের ব্যাকআপ ডাউনলোড</button>
+  </div>
+</section>
+
+<section>
+  <div class="card">
+    <h3>📢 বিজ্ঞাপনের স্থান</h3>
+    <p>এখানে পরে আপনার ব্যানার যুক্ত করা যাবে।</p>
+  </div>
+</section>
+<footer>© 2026 পণ্যবাড়ি | PonnoBari</footer>
+
+<script>
+const STORAGE_KEY = "ponnobari_products_v1";
+const starterProducts = [
+ {id:1,name:"স্মার্টফোন",price:"",image:"",link:"https://www.daraz.com.bd/",category:"ইলেকট্রনিক্স"},
+ {id:2,name:"হেডফোন",price:"",image:"",link:"https://www.daraz.com.bd/",category:"ইলেকট্রনিক্স"},
+ {id:3,name:"ইংরেজি শেখার বই",price:"",image:"",link:"https://www.rokomari.com/",category:"বই"},
+ {id:4,name:"হাতঘড়ি",price:"",image:"",link:"https://www.daraz.com.bd/",category:"ফ্যাশন"}
+];
+let products;
+try {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  products = saved ? JSON.parse(saved) : starterProducts;
+  if (!Array.isArray(products)) products = starterProducts;
+} catch(e) { products = starterProducts; }
+
+let editingId = null;
+const grid = document.getElementById("productGrid");
+const form = document.getElementById("productForm");
+const search = document.getElementById("search");
+
+function saveProducts() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  } catch(e) {
+    alert("ব্রাউজারে সংরক্ষণ করা যায়নি। ছবি/ডেটা ছোট করে আবার চেষ্টা করুন।");
+  }
+}
+function renderProducts() {
+  const q = search.value.trim().toLowerCase();
+  grid.innerHTML = "";
+  const shown = products.filter(p =>
+    (p.name + " " + (p.category || "")).toLowerCase().includes(q)
+  );
+  document.getElementById("emptyMessage").hidden = shown.length !== 0;
+  shown.forEach(p => {
+    const card = document.createElement("article");
+    card.className = "card";
+    const title = document.createElement("h3");
+    title.textContent = p.name;
+    const category = document.createElement("p");
+    category.textContent = p.category || "অন্যান্য";
+    if (p.image) {
+      const img = document.createElement("img");
+      img.src = p.image;
+      img.alt = p.name;
+      img.onerror = () => { img.style.display = "none"; };
+      card.appendChild(img);
+    } else {
+      const emoji = document.createElement("div");
+      emoji.className = "emoji";
+      emoji.textContent = "🛍️";
+      card.appendChild(emoji);
+    }
+    card.append(title, category);
+    if (p.price !== "") {
+      const price = document.createElement("p");
+      price.className = "price";
+      price.textContent = "৳ " + p.price;
+      card.appendChild(price);
+    }
+    const buy = document.createElement("a");
+    buy.className = "buy";
+    buy.textContent = "পণ্য দেখুন";
+    buy.href = p.link;
+    buy.target = "_blank";
+    buy.rel = "noopener noreferrer";
+    card.appendChild(buy);
+
+    const edit = document.createElement("button");
+    edit.textContent = "সম্পাদনা";
+    edit.onclick = () => startEdit(p.id);
+    const del = document.createElement("button");
+    del.textContent = "মুছুন";
+    del.onclick = () => {
+      if (confirm("এই পণ্যটি মুছে ফেলবেন?")) {
+        products = products.filter(x => x.id !== p.id);
+        saveProducts();
+        renderProducts();
+      }
+    };
+    card.append(edit, del);
+    grid.appendChild(card);
+  });
+}
+function startEdit(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  document.getElementById("name").value = p.name;
+  document.getElementById("price").value = p.price;
+  document.getElementById("image").value = p.image;
+  document.getElementById("link").value = p.link;
+  document.getElementById("category").value = p.category || "";
+  document.getElementById("saveButton").textContent = "পরিবর্তন সংরক্ষণ";
+  document.getElementById("cancelButton").hidden = false;
+  document.getElementById("admin").scrollIntoView({behavior:"smooth"});
+}
+function resetForm() {
+  editingId = null;
+  form.reset();
+  document.getElementById("saveButton").textContent = "পণ্য যোগ করুন";
+  document.getElementById("cancelButton").hidden = true;
+}
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const item = {
+    id: editingId ?? Date.now(),
+    name: document.getElementById("name").value.trim(),
+    price: document.getElementById("price").value,
+    image: document.getElementById("image").value.trim(),
+    link: document.getElementById("link").value.trim(),
+    category: document.getElementById("category").value.trim()
+  };
+  if (!/^https?:\/\//i.test(item.link)) {
+    alert("সঠিক অ্যাফিলিয়েট URL দিন (https:// দিয়ে শুরু হবে)।");
+    return;
+  }
+  if (editingId !== null) {
+    products = products.map(p => p.id === editingId ? item : p);
+  } else {
+    products.unshift(item);
+  }
+  saveProducts();
+  resetForm();
+  renderProducts();
+  alert("পণ্য সংরক্ষণ হয়েছে।");
+});
+document.getElementById("cancelButton").addEventListener("click", resetForm);
+document.getElementById("exportButton").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(products, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ponnobari-products-backup.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+search.addEventListener("input", renderProducts);
+renderProducts();
+</script>
+</body>
+</html>
