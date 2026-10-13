@@ -101,9 +101,9 @@ const search = document.getElementById("search");
 
 function saveProducts() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
   } catch(e) {
-    alert("ব্রাউজারে সংরক্ষণ করা যায়নি। ছবি/ডেটা ছোট করে আবার চেষ্টা করুন।");
+  alert("ব্রাউজারে সংরক্ষণ করা যায়নি। ছবি/ডেটা ছোট করে আবার চেষ্টা করুন।");
   }
 }
 function renderProducts() {
