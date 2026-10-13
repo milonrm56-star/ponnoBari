@@ -82,13 +82,13 @@ footer{background:#102b22;color:white;text-align:center;padding:22px}
 <script>
 const STORAGE_KEY = "ponnobari_products_v1";
 const starterProducts = [
- {id:1,name:"সবার জন বুকাবুলারী",price:"",image:"https://rokbucket.rokomari.io/ProductNew20190903/260X372/e19fc387a_212325.jpg",link:"https://rkmri.co/p30meR5p2eA5/",category:"বই"},
+ {id:1,name:"স্মার্টফোন",price:"",image:"",link:"https://www.daraz.com.bd/",category:"ইলেকট্রনিক্স"},
  {id:2,name:"হেডফোন",price:"",image:"",link:"https://www.daraz.com.bd/",category:"ইলেকট্রনিক্স"},
  {id:3,name:"ইংরেজি শেখার বই",price:"",image:"",link:"https://www.rokomari.com/",category:"বই"},
  {id:4,name:"হাতঘড়ি",price:"",image:"",link:"https://www.daraz.com.bd/",category:"ফ্যাশন"}
 ];
-;
-try {let products
+let products;
+try {
   const saved = localStorage.getItem(STORAGE_KEY);
   products = saved ? JSON.parse(saved) : starterProducts;
   if (!Array.isArray(products)) products = starterProducts;
@@ -101,9 +101,9 @@ const search = document.getElementById("search");
 
 function saveProducts() {
   try {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
   } catch(e) {
-  alert("ব্রাউজারে সংরক্ষণ করা যায়নি। ছবি/ডেটা ছোট করে আবার চেষ্টা করুন।");
+    alert("ব্রাউজারে সংরক্ষণ করা যায়নি। ছবি/ডেটা ছোট করে আবার চেষ্টা করুন।");
   }
 }
 function renderProducts() {
